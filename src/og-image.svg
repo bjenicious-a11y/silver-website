@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+<rect width="1200" height="630" fill="#ECFEFF"/>
+<rect x="60" y="60" width="1080" height="510" rx="40" fill="#FFFFFF"/>
+<text x="120" y="200" font-family="DejaVu Sans, Arial, sans-serif" font-size="44" font-weight="700" fill="#0F766E">SilverMeter</text>
+<text x="120" y="290" font-family="DejaVu Sans, Arial, sans-serif" font-size="64" font-weight="800" fill="#042F2E">Is silver cheap today?</text>
+<text x="120" y="360" font-family="DejaVu Sans, Arial, sans-serif" font-size="32" fill="#134E4A">Today's silver rate in India, compared</text>
+<text x="120" y="405" font-family="DejaVu Sans, Arial, sans-serif" font-size="32" fill="#134E4A">with the last 30 days.</text>
+<g transform="translate(760,170)">
+<path d="M30 190 A160 160 0 0 1 110 51.4" fill="none" stroke="#14B8A6" stroke-width="28" stroke-linecap="round"/>
+<path d="M118 47 A160 160 0 0 1 262 47" fill="none" stroke="#FCD34D" stroke-width="28"/>
+<path d="M270 51.4 A160 160 0 0 1 350 190" fill="none" stroke="#FB7185" stroke-width="28" stroke-linecap="round"/>
+<line x1="190" y1="190" x2="100" y2="110" stroke="#042F2E" stroke-width="7" stroke-linecap="round"/>
+<circle cx="190" cy="190" r="13" fill="#042F2E"/>
+</g>
+</svg>
