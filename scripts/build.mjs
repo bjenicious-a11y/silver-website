@@ -409,7 +409,7 @@ function staticPages() {
     `How ${config.name} handles your data: what we collect, cookies and third-party services.`,
     `<p>Last updated: ${esc(longDate(BUILD_DATE))}</p>
 <h2>What we collect</h2><p>${esc(config.name)} does not ask you to create an account. The calculator runs entirely in your browser; the numbers you type are not sent to us.</p>
-<h2>Hosting</h2><p>This site is hosted on GitHub Pages. GitHub may log technical information such as IP addresses to keep the service secure. See GitHub's privacy statement for details.</p>
+<h2>Hosting</h2><p>This site is hosted and delivered by Cloudflare. Cloudflare may process technical information such as IP addresses to deliver the site and protect it from attacks. See Cloudflare's privacy policy for details.</p>
 <h2>Advertising and cookies</h2>${config.adsenseClientId
       ? `<p>We show ads from Google AdSense. Google and its partners use cookies to serve ads based on your visits to this and other websites. You can opt out of personalised advertising in Google's Ads Settings. Visitors in some regions will be asked for consent before cookies are set.</p>`
       : `<p>This site does not currently set advertising or tracking cookies. If we add advertising (such as Google AdSense) in future, this policy will be updated before it goes live.</p>`}
@@ -450,6 +450,10 @@ ${pages.map((p) => `  <url><loc>${abs(p.path)}</loc><lastmod>${lastmod}</lastmod
 </urlset>
 `);
 write('robots.txt', `User-agent: *\nAllow: /\n\nSitemap: ${abs('/sitemap.xml')}\n`);
-write('.nojekyll', '');
+if (config.adsenseClientId) {
+  // AdSense ads.txt: publisher id is the client id without the "ca-" prefix.
+  write('ads.txt', `google.com, ${config.adsenseClientId.replace(/^ca-/, '')}, DIRECT, f08c47fec0942fa0\n`);
+}
+copyFileSync(join(ROOT, 'src', '_headers'), join(OUT, '_headers'));
 
 console.log(`Built ${pages.length} pages + 404 into dist/ (sample data: ${data.sample})`);

@@ -1,8 +1,8 @@
-name: Build and deploy site
+name: Update silver rates
 
+# Fetches today's rate (if RATE_API_URL secret is set) and commits data/rates.json.
+# Cloudflare rebuilds and redeploys the site automatically on every push to main.
 on:
-  push:
-    branches: [main]
   schedule:
     # 04:15 UTC = 09:45 IST, every day
     - cron: '15 4 * * *'
@@ -10,15 +10,9 @@ on:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: false
 
 jobs:
-  build:
+  update:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,8 +21,7 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Update today's rates (scheduled / manual runs only)
-        if: github.event_name != 'push'
+      - name: Fetch today's rates
         env:
           RATE_API_URL: ${{ secrets.RATE_API_URL }}
           RATE_API_KEY: ${{ secrets.RATE_API_KEY }}
@@ -36,8 +29,10 @@ jobs:
           RATE_SOURCE_URL: ${{ secrets.RATE_SOURCE_URL }}
         run: node scripts/update-rates.mjs
 
+      - name: Check the site still builds
+        run: node scripts/build.mjs && node scripts/check.mjs
+
       - name: Commit updated rates
-        if: github.event_name != 'push'
         run: |
           if ! git diff --quiet data/rates.json; then
             git config user.name "github-actions[bot]"
@@ -46,25 +41,3 @@ jobs:
             git commit -m "Update silver rates"
             git push
           fi
-
-      - name: Build site
-        run: node scripts/build.mjs
-
-      - name: Check site
-        run: node scripts/check.mjs
-
-      - uses: actions/configure-pages@v5
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4

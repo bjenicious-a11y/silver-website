@@ -1,0 +1,10 @@
+// Cloudflare Workers static-assets config. The site in dist/ is served as static files (free tier).
+{
+  "name": "silvermeter",
+  "compatibility_date": "2026-11-10",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash"
+  }
+}
