@@ -1,58 +1,110 @@
 {
-  "sample": true,
+  "sample": false,
   "method": "estimate",
   "importDutyPct": 15,
-  "sourceName": "Sample data for preview only - not a live rate feed",
-  "sourceUrl": "",
-  "unit": "INR per kg, 999 fine silver",
-  "updatedAt": "2026-11-10T09:30:00+05:30",
+  "sourceName": "MetalCharts (international silver spot price in INR)",
+  "sourceUrl": "https://metalcharts.org",
+  "unit": "INR per kg, 999 fine silver, estimated India rate before GST",
+  "updatedAt": "2026-11-11T14:51:48.045Z",
   "locations": {
     "india": {
       "name": "India",
       "history": [
         {
-          "date": "2026-10-31",
-          "rate999PerKg": 225900
+          "date": "2026-10-09",
+          "rate999PerKg": 216990
         },
         {
-          "date": "2026-11-01",
-          "rate999PerKg": 216000
+          "date": "2026-10-12",
+          "rate999PerKg": 213239
+        },
+        {
+          "date": "2026-10-13",
+          "rate999PerKg": 208778
+        },
+        {
+          "date": "2026-10-14",
+          "rate999PerKg": 195684
+        },
+        {
+          "date": "2026-10-15",
+          "rate999PerKg": 202084
+        },
+        {
+          "date": "2026-10-16",
+          "rate999PerKg": 200206
+        },
+        {
+          "date": "2026-10-19",
+          "rate999PerKg": 200362
+        },
+        {
+          "date": "2026-10-20",
+          "rate999PerKg": 202753
+        },
+        {
+          "date": "2026-10-21",
+          "rate999PerKg": 202225
+        },
+        {
+          "date": "2026-10-22",
+          "rate999PerKg": 191635
+        },
+        {
+          "date": "2026-10-23",
+          "rate999PerKg": 189424
+        },
+        {
+          "date": "2026-10-26",
+          "rate999PerKg": 189668
+        },
+        {
+          "date": "2026-10-27",
+          "rate999PerKg": 191574
+        },
+        {
+          "date": "2026-10-28",
+          "rate999PerKg": 190920
+        },
+        {
+          "date": "2026-10-29",
+          "rate999PerKg": 184412
+        },
+        {
+          "date": "2026-10-30",
+          "rate999PerKg": 173287
         },
         {
           "date": "2026-11-02",
-          "rate999PerKg": 215900
+          "rate999PerKg": 177567
         },
         {
           "date": "2026-11-03",
-          "rate999PerKg": 215900
+          "rate999PerKg": 173102
         },
         {
           "date": "2026-11-04",
-          "rate999PerKg": 215900
+          "rate999PerKg": 182620
         },
         {
           "date": "2026-11-05",
-          "rate999PerKg": 215900
+          "rate999PerKg": 183480
         },
         {
           "date": "2026-11-06",
-          "rate999PerKg": 226100
-        },
-        {
-          "date": "2026-11-07",
-          "rate999PerKg": 220900
-        },
-        {
-          "date": "2026-11-08",
-          "rate999PerKg": 221000
+          "rate999PerKg": 180277
         },
         {
           "date": "2026-11-09",
-          "rate999PerKg": 220900
+          "rate999PerKg": 185350
         },
         {
           "date": "2026-11-10",
-          "rate999PerKg": 220900
+          "rate999PerKg": 178687
+        },
+        {
+          "date": "2026-11-11",
+          "rate999PerKg": 181523
         }
       ]
     }
