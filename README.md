@@ -35,7 +35,11 @@ SEO built in: unique titles and descriptions, canonical URLs on `https://silverm
 
 ## Before launch
 
-1. **Real rate data.** `data/rates.json` holds **sample data** (`"sample": true`). While it is set, every page shows a "Preview" banner and has `noindex`. When you have a real source, either edit `data/rates.json` daily (GitHub web editor works) or add repo secrets `RATE_API_URL` (+ optional `RATE_API_KEY`, `RATE_SOURCE_NAME`, `RATE_SOURCE_URL`) — see `scripts/update-rates.mjs`. Then set `"sample": false` and the correct `sourceName` / `sourceUrl`. Make sure your source allows republishing.
+1. **Real rate data (MetalCharts).** Rates come from the [MetalCharts](https://metalcharts.org) API (free plan, commercial use allowed): the international silver spot price in INR plus India's import duty (`importDutyPct` in `data/rates.json`, currently 15% = 10% BCD + 5% AIDC) gives an **estimated India rate before 3% GST**. Setup:
+   - Create a free MetalCharts account → API console → create a key.
+   - GitHub repo → Settings → Secrets and variables → Actions → New repository secret: `METALCHARTS_API_KEY`.
+   - Actions → "Update silver rates" → Run workflow. The first run replaces the sample data with the last ~30 days of real prices, turns off the Preview banner and `noindex`, and commits to `main`; Cloudflare deploys it. After that it runs daily at 09:45 IST (about 31 API calls a month, within the free 200).
+   - If the import duty changes, update `importDutyPct` and run the workflow with "backfill" ticked.
 2. **Add cities:** add an entry under `locations` in `data/rates.json`. A city page, sitemap entry and "Meter by city" tile appear automatically.
 3. **Settings in `site.config.json`:** `contactEmail` (builds the Contact page; Cloudflare Email Routing can forward `contact@silvermeter.in` to your inbox for free), `whatsappChannelUrl`, `adsenseClientId` (adds AdSense auto ads, `ads.txt`, and updates the privacy policy), `googleSiteVerification`.
 4. **Google Search Console:** add `silvermeter.in` (Domain property, verify via a Cloudflare DNS TXT record) and submit `https://silvermeter.in/sitemap.xml`.

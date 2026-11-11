@@ -55,6 +55,8 @@ function analyse(slug, loc) {
 const locations = Object.entries(data.locations).map(([slug, loc]) => analyse(slug, loc));
 const india = locations.find((l) => l.slug === 'india') || locations[0];
 const cities = locations.filter((l) => l !== india);
+const EST = data.method === 'estimate';
+const DUTY = Number(data.importDutyPct ?? 15);
 const cityPath = (l) => (l === india ? '/' : `/silver-rate-today-${l.slug}/`);
 
 const ZONES = {
@@ -250,7 +252,7 @@ function calculatorBlock(l, { heading = 'h2', compact = false } = {}) {
 function faqFor(l) {
   const where = l === india ? 'in India' : `in ${l.name}`;
   return [
-    [`What is the silver rate today ${where}?`, `On ${longDate(l.today.date)}, the 999 silver rate ${where} is ${inr(l.perGram, 2)} per gram and ${inr(l.today.rate999PerKg)} per kg.`],
+    [`What is the silver rate today ${where}?`, `On ${longDate(l.today.date)}, the ${EST ? "estimated " : ""}999 silver rate ${where} is ${inr(l.perGram, 2)} per gram and ${inr(l.today.rate999PerKg)} per kg${EST ? " (before 3% GST)" : ""}.`],
     [`What is the price of 10 grams of silver today ${where}?`, `10 grams of 999 silver costs ${inr(l.perGram * 10)} on ${longDate(l.today.date)}, before GST and making charges.`],
     ['Is silver cheap today?', `Today's rate is ${ZONES[l.zone].headline} compared with the last ${l.days} days (low ${inr(l.min)}, average ${inr(Math.round(l.avg))}, high ${inr(l.max)} per kg). This is a price comparison, not investment advice.`],
     ['What is the difference between 999 and 925 silver?', '999 silver is 99.9% pure and used for coins and bars. 925 (sterling) silver is 92.5% silver mixed with other metals so it is stronger, which is why most jewellery is 925.'],
@@ -301,6 +303,7 @@ function ratePage(l) {
       <div><span class="label">10 grams</span><span class="mid">${inr(l.perGram * 10)}</span></div>
     </div>
     <p class="change ${changeClass(l)}">${esc(changeText(l))} (per kg)</p>
+    ${EST ? `<p class="small muted">Estimated India rate: international silver price in rupees + ${DUTY}% import duty, before 3% GST. Your jeweller's rate may differ slightly. <a href="${link('/data-source/')}">How we calculate it</a>.</p>` : ''}
     <p class="small muted">${sourceLine()}</p>
   </div>
   <div class="card gauge-card">
@@ -395,6 +398,7 @@ function staticPages() {
   pages.push(textPage('/data-source/', 'Data source and method', 'Data Source & Method',
     `Where ${config.name} gets its silver rates, when they are updated, and how the cheap / normal / costly meter is calculated.`,
     `<h2>Where the rates come from</h2><p>Current source: <strong>${esc(data.sourceName)}</strong>${data.sourceUrl ? ` (<a href="${esc(data.sourceUrl)}" rel="nofollow noopener" target="_blank">link</a>)` : ''}. Rates are for 999 fine silver, quoted in Indian rupees per kilogram, and are updated once a day in the morning (IST).</p>
+${EST ? `<h2>How the India rate is estimated</h2><p>We take the international silver spot price, convert it to rupees at the day's exchange rate, and add India's import duty of ${DUTY}% (10% basic customs duty + 5% Agriculture Infrastructure and Development Cess, in force since 13 May 2026). The result is an <strong>estimated India rate before 3% GST</strong>.</p><p>This closely tracks the wholesale rate, but local jewellers and bullion associations add their own premium, so the price at your shop can be slightly different. Always confirm with your jeweller before buying.</p>` : ''}
 <p>Silver rates in India are discovered on the Multi Commodity Exchange (MCX) and published as reference rates by the India Bullion and Jewellers Association (IBJA). Local rates in each city can differ slightly because of local bullion association quotes, transport and dealer margins.</p>
 <h2>How the meter works</h2><p>For each location we take the daily 999 rate for up to the last ${WINDOW_DAYS} days on record and find the lowest and highest values. Today's position in that range decides the reading:</p>
 <ul><li><strong>Lower than usual</strong>: bottom third of the range</li><li><strong>Normal</strong>: middle third</li><li><strong>Higher than usual</strong>: top third</li><li><strong>Steady</strong>: the rate did not change in the period</li></ul>
