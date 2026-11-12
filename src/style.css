@@ -132,6 +132,9 @@ input, select { font: inherit; font-size: 16px; min-height: 48px; border: 1px so
 @media (max-width: 560px) {
   .card { padding: 18px; border-radius: 18px; }
   .stats strong { font-size: .95rem; }
+  /* SVG text sizes are in viewBox units: enlarge chart labels so they stay readable on phones */
+  .chart text { font-size: 30px; stroke-width: 8px; }
+  .chart polyline { stroke-width: 5; }
   .big-rates { gap: 18px; }
 }
 @media print {

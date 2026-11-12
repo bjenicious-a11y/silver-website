@@ -25,6 +25,13 @@ if (!KEY) {
   process.exit(0);
 }
 
+// Silver markets are closed on Saturday and Sunday: the price would just repeat Friday's.
+const istWeekday = new Date(Date.now() + 5.5 * 3600 * 1000).getUTCDay();
+if (!BACKFILL && (istWeekday === 0 || istWeekday === 6)) {
+  console.log('Weekend in India - markets closed, no new rate added.');
+  process.exit(0);
+}
+
 const data = JSON.parse(readFileSync(FILE, 'utf8'));
 const dutyPct = Number(process.env.IMPORT_DUTY_PCT ?? data.importDutyPct ?? 15);
 const factor = 1 + dutyPct / 100;
@@ -54,14 +61,15 @@ const india = (data.locations.india ||= { name: 'India', history: [] });
 if (BACKFILL || data.sample) {
   const body = await api('/v1/history/XAG?range=1M&interval=1d&currency=INR&unit=kg');
   const points = (body.data || [])
-    .map((p) => ({ date: istDate(p.timestamp), rate999PerKg: check((p.close ?? p.price) * factor, p.timestamp) }));
+    .map((p) => ({ date: istDate(p.timestamp), rate999PerKg: check((p.close ?? p.price) * factor, p.timestamp) }))
+    .filter((p) => ![0, 6].includes(new Date(p.date + 'T00:00:00Z').getUTCDay()));
   if (points.length < 5) throw new Error(`Backfill returned only ${points.length} points`);
   const byDate = new Map(points.map((p) => [p.date, p]));
   india.history = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
   console.log(`Backfilled ${india.history.length} days: ${india.history[0].date} .. ${india.history.at(-1).date}`);
 }
 
-{
+if (![0, 6].includes(istWeekday)) {
   const body = await api('/v1/convert?from=XAG&to=INR&amount=1&unit=kg');
   const spotPerKg = Number(body.result);
   const rate = check(spotPerKg * factor, 'today');

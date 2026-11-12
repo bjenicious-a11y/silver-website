@@ -55,7 +55,7 @@ for (const file of files) {
   }
 }
 
-for (const f of ['sitemap.xml', 'robots.txt', 'favicon.svg', 'og-image.png', 'assets/style.css', 'assets/app.js']) {
+for (const f of ['sitemap.xml', 'robots.txt', 'favicon.svg', 'favicon-48.png', 'apple-touch-icon.png', 'og-image.png', 'assets/style.css', 'assets/app.js']) {
   if (!existsSync(join(OUT, f))) errors.push(`missing ${f}`);
 }
 

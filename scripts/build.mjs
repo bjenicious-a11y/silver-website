@@ -13,7 +13,8 @@ const BASE_URL = config.baseUrl.replace(/\/$/, '');
 const BASE_PATH = new URL(BASE_URL).pathname.replace(/\/$/, '');
 const WINDOW_DAYS = 30;
 const PURITY_925 = 0.925;
-const BUILD_DATE = new Date().toISOString().slice(0, 10);
+// Date the static pages (about, data source, disclaimer, privacy) last changed. Update when editing them.
+const STATIC_PAGES_UPDATED = '2026-11-12';
 
 // ---------- helpers ----------
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -81,7 +82,7 @@ function gaugeSvg(l) {
   const theta = Math.PI * (1 - l.position);
   const x = (cx + r * Math.cos(theta)).toFixed(1);
   const y = (cy - r * Math.sin(theta)).toFixed(1);
-  const label = `Gauge: today's rate is ${ZONES[l.zone].short.toLowerCase()} compared with the last ${l.days} days`;
+  const label = `Gauge: today's rate is ${ZONES[l.zone].short.toLowerCase()} compared with the last ${l.days} trading days`;
   return `<svg class="gauge" viewBox="0 0 380 210" role="img" aria-label="${esc(label)}">
   <path d="M30 190 A160 160 0 0 1 110 51.4" fill="none" stroke="#14B8A6" stroke-width="28" stroke-linecap="round"/>
   <path d="M118 47 A160 160 0 0 1 262 47" fill="none" stroke="#FCD34D" stroke-width="28"/>
@@ -108,7 +109,7 @@ function chartSvg(l, points = l.win) {
   const desc = `Silver rate per kg from ${dateFmt(points[0].date)} to ${dateFmt(last.date)}: low ${inr(Math.min(...vals))}, high ${inr(Math.max(...vals))}, latest ${inr(last.rate999PerKg)}.`;
   return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(desc)}">
   ${ticks.map((t, i) => `<line x1="${pl}" x2="${W - pr}" y1="${sy(t).toFixed(1)}" y2="${sy(t).toFixed(1)}" stroke="${i === 1 ? '#0F766E' : '#99F6E4'}" stroke-dasharray="${i === 1 ? '6 6' : '2 4'}"/>
-  <text x="${W - pr}" y="${(sy(t) - 6).toFixed(1)}" text-anchor="end" font-size="15" font-weight="600" fill="#134E4A">${tickLabels[i]} ${esc(inr(Math.round(t / 100) * 100))}</text>`).join('\n  ')}
+  <text x="${W - pr}" y="${(sy(t) - 6).toFixed(1)}" text-anchor="end" font-size="15" font-weight="600" fill="#134E4A" stroke="#fff" stroke-width="5" paint-order="stroke">${tickLabels[i]} ${esc(inr(Math.round(t / 100) * 100))}</text>`).join('\n  ')}
   <polyline points="${line}" fill="none" stroke="#042F2E" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
   <circle cx="${sx(points.length - 1).toFixed(1)}" cy="${sy(last.rate999PerKg).toFixed(1)}" r="6" fill="#0D9488" stroke="#fff" stroke-width="2"/>
   <text x="${pl}" y="${H - 10}" font-size="14" fill="#134E4A">${esc(dateFmt(points[0].date))}</text>
@@ -170,6 +171,8 @@ function layout({ path, title, description, body, breadcrumbs = [], jsonld = [],
 <meta name="theme-color" content="#042F2E">
 ${verify}
 <link rel="icon" href="${link('/favicon.svg')}" type="image/svg+xml">
+<link rel="icon" href="${link('/favicon-48.png')}" type="image/png" sizes="48x48">
+<link rel="apple-touch-icon" href="${link('/apple-touch-icon.png')}">
 <link rel="manifest" href="${link('/site.webmanifest')}">
 <link rel="stylesheet" href="${link('/assets/style.css')}">
 ${ads}
@@ -254,7 +257,7 @@ function faqFor(l) {
   return [
     [`What is the silver rate today ${where}?`, `On ${longDate(l.today.date)}, the ${EST ? "estimated " : ""}999 silver rate ${where} is ${inr(l.perGram, 2)} per gram and ${inr(l.today.rate999PerKg)} per kg${EST ? " (before 3% GST)" : ""}.`],
     [`What is the price of 10 grams of silver today ${where}?`, `10 grams of 999 silver costs ${inr(l.perGram * 10)} on ${longDate(l.today.date)}, before GST and making charges.`],
-    ['Is silver cheap today?', `Today's rate is ${ZONES[l.zone].headline} compared with the last ${l.days} days (low ${inr(l.min)}, average ${inr(Math.round(l.avg))}, high ${inr(l.max)} per kg). This is a price comparison, not investment advice.`],
+    ['Is silver cheap today?', `Today's rate is ${ZONES[l.zone].headline} compared with the last ${l.days} trading days (low ${inr(l.min)}, average ${inr(Math.round(l.avg))}, high ${inr(l.max)} per kg). This is a price comparison, not investment advice.`],
     ['What is the difference between 999 and 925 silver?', '999 silver is 99.9% pure and used for coins and bars. 925 (sterling) silver is 92.5% silver mixed with other metals so it is stronger, which is why most jewellery is 925.'],
     ['How much GST is charged on silver?', 'GST on silver jewellery, coins and bars in India is 3% of the value. Making charges are added before GST is calculated.']
   ];
@@ -288,7 +291,7 @@ function ratePage(l) {
   const placeName = isHome ? 'India' : l.name;
   const z = ZONES[l.zone];
   const title = `Silver Rate Today in ${placeName} (${dateFmt(l.today.date)}) – ${inr(l.perGram, 0)}/g | ${config.name}`;
-  const description = `Silver rate today in ${placeName}: ${inr(l.perGram, 2)} per gram, ${inr(l.today.rate999PerKg)} per kg (999). See if it's cheap vs the last ${l.days} days, plus 10 g price and calculator.`;
+  const description = `Silver rate today in ${placeName}: ${inr(l.perGram, 2)} per gram, ${inr(l.today.rate999PerKg)} per kg (999). See if it's cheap vs the last ${l.days} trading days, plus 10 g price and calculator.`;
   const faq = faqBlock(l);
   const body = `
 <section class="hero wrap">
@@ -296,7 +299,7 @@ function ratePage(l) {
     <p class="pill">${esc(placeName)} · ${esc(longDate(l.today.date))}</p>
     <h1>Silver Rate Today in ${esc(placeName)}</h1>
     <p class="verdict">Silver is <span class="${z.cls}-text">${esc(z.headline)}</span> today.</p>
-    <p class="lead">Today's rate compared with the last ${l.days} days. We compare, you decide — this is not investment advice.</p>
+    <p class="lead">Today's rate compared with the last ${l.days} trading days. We compare, you decide — this is not investment advice.</p>
     <div class="big-rates">
       <div><span class="label">Per gram (999)</span><span class="big">${inr(l.perGram, 2)}</span></div>
       <div><span class="label">Per kg</span><span class="mid">${inr(l.today.rate999PerKg)}</span></div>
@@ -310,15 +313,15 @@ function ratePage(l) {
     ${gaugeSvg(l)}
     <div class="gauge-legend"><span class="z-low-text">Lower than usual</span><span class="z-normal-text">Normal</span><span class="z-high-text">Higher</span></div>
     <div class="stats">
-      <div><span>${l.days}-day low</span><strong>${inr(l.min)}</strong></div>
-      <div><span>${l.days}-day avg</span><strong>${inr(Math.round(l.avg))}</strong></div>
-      <div><span>${l.days}-day high</span><strong>${inr(l.max)}</strong></div>
+      <div><span>Low</span><strong>${inr(l.min)}</strong></div>
+      <div><span>Average</span><strong>${inr(Math.round(l.avg))}</strong></div>
+      <div><span>High</span><strong>${inr(l.max)}</strong></div>
     </div>
-    <p class="small muted center">Per kg, 999 silver</p>
+    <p class="small muted center">Per kg, 999 silver · last ${l.days} trading days</p>
   </div>
 </section>
 <div class="wrap grid-2">
-  <section class="card" aria-labelledby="chart-h"><h2 id="chart-h">Silver rate in ${esc(placeName)}: last ${l.days} days</h2>${chartSvg(l)}<p class="small"><a href="${link('/silver-rate-history/')}">See full silver rate history</a></p></section>
+  <section class="card" aria-labelledby="chart-h"><h2 id="chart-h">Silver rate in ${esc(placeName)}: last ${l.days} trading days</h2>${chartSvg(l)}<p class="small"><a href="${link('/silver-rate-history/')}">See full silver rate history</a></p></section>
   ${calculatorBlock(l, { compact: true })}
 </div>
 <div class="wrap stack">
@@ -326,7 +329,7 @@ function ratePage(l) {
   <p class="small muted">925 sterling silver (jewellery grade) works out to about ${inr(l.perGram * PURITY_925, 2)} per gram at today's 999 rate, before making charges and GST.</p></section>
   ${alertsBlock()}
   ${cityBoard(l)}
-  <section class="card" aria-labelledby="how-h"><h2 id="how-h">How the meter decides</h2><p>We take the 999 silver rate for each of the last ${l.days} days we have on record. If today's rate sits in the bottom third of that low-to-high range, the meter reads <strong>lower than usual</strong>; in the top third, <strong>higher than usual</strong>; otherwise <strong>normal</strong>. <a href="${link('/data-source/')}">Read our data source and method</a>.</p></section>
+  <section class="card" aria-labelledby="how-h"><h2 id="how-h">How the meter decides</h2><p>We take the 999 silver rate for each of the last ${l.days} trading days we have on record. If today's rate sits in the bottom third of that low-to-high range, the meter reads <strong>lower than usual</strong>; in the top third, <strong>higher than usual</strong>; otherwise <strong>normal</strong>. <a href="${link('/data-source/')}">Read our data source and method</a>.</p></section>
   ${faq.html}
 </div>`;
   const jsonld = [faq.ld];
@@ -378,13 +381,13 @@ ${chartSvg(l, l.history)}
 </section>`;
   }).join('\n');
   const body = `<div class="wrap stack"><h1>Silver rate history</h1><p class="lead">Every daily 999 silver rate we have recorded, newest first, with monthly highs, lows and averages.</p><p class="small muted">${sourceLine()}</p>${sections}</div>`;
-  const ld = { '@context': 'https://schema.org', '@type': 'Dataset', name: 'Daily silver rate history (India)', description: 'Daily 999 fine silver rate in INR per kg.', url: abs(path), temporalCoverage: `${india.history[0].date}/${india.today.date}`, variableMeasured: 'Silver rate (INR per kg, 999 fine)', creator: { '@type': 'Organization', name: config.name } };
-  return { path, html: layout({ path, title, description, body, breadcrumbs: [[path, 'Silver rate history']], jsonld: [ld] }) };
+  // No Dataset schema: Google requires a licence we cannot grant for third-party price data.
+  return { path, html: layout({ path, title, description, body, breadcrumbs: [[path, 'Silver rate history']] }) };
 }
 
 function textPage(path, h1, title, description, inner, crumb) {
   const body = `<div class="wrap stack narrow prose"><h1>${esc(h1)}</h1>${inner}</div>`;
-  return { path, html: layout({ path, title: `${title} | ${config.name}`, description, body, breadcrumbs: [[path, crumb || h1]] }) };
+  return { path, lastmod: STATIC_PAGES_UPDATED, html: layout({ path, title: `${title} | ${config.name}`, description, body, breadcrumbs: [[path, crumb || h1]] }) };
 }
 
 function staticPages() {
@@ -411,7 +414,7 @@ ${EST ? `<h2>How the India rate is estimated</h2><p>We take the international si
 <p>${esc(config.name)} is not responsible for any loss arising from use of this information.</p>`));
   pages.push(textPage('/privacy-policy/', 'Privacy policy', 'Privacy Policy',
     `How ${config.name} handles your data: what we collect, cookies and third-party services.`,
-    `<p>Last updated: ${esc(longDate(BUILD_DATE))}</p>
+    `<p>Last updated: ${esc(longDate(STATIC_PAGES_UPDATED))}</p>
 <h2>What we collect</h2><p>${esc(config.name)} does not ask you to create an account. The calculator runs entirely in your browser; the numbers you type are not sent to us.</p>
 <h2>Hosting</h2><p>This site is hosted and delivered by Cloudflare. Cloudflare may process technical information such as IP addresses to deliver the site and protect it from attacks. See Cloudflare's privacy policy for details.</p>
 <h2>Advertising and cookies</h2>${config.adsenseClientId
@@ -428,7 +431,7 @@ ${config.contactEmail ? `<h2>Contact</h2><p>Questions about this policy: <a href
 
 function notFoundPage() {
   const body = `<div class="wrap stack narrow center"><h1>Page not found</h1><p class="lead">That page does not exist. Today's silver rate is just a click away.</p><p><a class="btn" href="${link('/')}">See today's silver rate</a></p></div>`;
-  return layout({ path: '/404.html', title: `Page not found | ${config.name}`, description: 'This page could not be found.', body }).replace(/<meta name="robots" content="[^"]*">/, '<meta name="robots" content="noindex">');
+  return layout({ path: '/404.html', title: `Page not found | ${config.name}`, description: 'This page could not be found.', body }).replace(/<meta name="robots" content="[^"]*">/, '<meta name="robots" content="noindex">').replace(/<link rel="canonical"[^>]*>\n/, '').replace(/<meta property="og:url"[^>]*>\n/, '');
 }
 
 // ---------- build ----------
@@ -444,13 +447,15 @@ copyFileSync(join(ROOT, 'src', 'style.css'), join(OUT, 'assets', 'style.css'));
 copyFileSync(join(ROOT, 'src', 'app.js'), join(OUT, 'assets', 'app.js'));
 copyFileSync(join(ROOT, 'src', 'favicon.svg'), join(OUT, 'favicon.svg'));
 copyFileSync(join(ROOT, 'src', 'og-image.png'), join(OUT, 'og-image.png'));
+copyFileSync(join(ROOT, 'src', 'favicon-48.png'), join(OUT, 'favicon-48.png'));
+copyFileSync(join(ROOT, 'src', 'apple-touch-icon.png'), join(OUT, 'apple-touch-icon.png'));
 
-write('site.webmanifest', JSON.stringify({ name: config.name, short_name: config.name, start_url: `${BASE_PATH}/`, display: 'standalone', background_color: '#ECFEFF', theme_color: '#042F2E', icons: [{ src: `${BASE_PATH}/favicon.svg`, sizes: 'any', type: 'image/svg+xml' }] }, null, 2));
+write('site.webmanifest', JSON.stringify({ name: config.name, short_name: config.name, start_url: `${BASE_PATH}/`, display: 'standalone', background_color: '#ECFEFF', theme_color: '#042F2E', icons: [{ src: `${BASE_PATH}/favicon.svg`, sizes: 'any', type: 'image/svg+xml' }, { src: `${BASE_PATH}/apple-touch-icon.png`, sizes: '180x180', type: 'image/png' }] }, null, 2));
 
 const lastmod = india.today.date;
 write('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${pages.map((p) => `  <url><loc>${abs(p.path)}</loc><lastmod>${lastmod}</lastmod></url>`).join('\n')}
+${pages.map((p) => `  <url><loc>${abs(p.path)}</loc><lastmod>${p.lastmod || lastmod}</lastmod></url>`).join('\n')}
 </urlset>
 `);
 write('robots.txt', `User-agent: *\nAllow: /\n\nSitemap: ${abs('/sitemap.xml')}\n`);
