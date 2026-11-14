@@ -81,6 +81,13 @@ p { margin: 0 0 1em; }
 
 .chart { width: 100%; display: block; margin: 8px 0; }
 
+.hero-unit { padding-bottom: 4px; }
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.stat { display: flex; flex-direction: column; gap: 2px; padding: 16px; }
+.stat span { font-size: .85rem; color: var(--ink-3); }
+.stat strong { font-size: 1.25rem; }
+.stat small { font-size: .8rem; color: var(--ink-2); }
+
 .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 table.rates { width: 100%; border-collapse: collapse; font-size: 1rem; }
 table.rates caption { text-align: left; font-size: .875rem; color: var(--ink-3); padding-bottom: 8px; }

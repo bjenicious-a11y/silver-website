@@ -194,6 +194,7 @@ ${body}
 <footer class="site-footer">
   <div class="wrap footer-row">
     <div><span class="brand brand-footer">${esc(config.name)}</span><p class="muted-light">${esc(config.tagline)}.</p></div>
+    <nav aria-label="Silver rate by weight"><ul class="footer-links"><li><a href="${link('/silver-rate-1-gram/')}">1 gram silver rate</a></li><li><a href="${link('/silver-rate-10-grams/')}">10 grams silver rate</a></li><li><a href="${link('/silver-rate-100-grams/')}">100 grams silver rate</a></li><li><a href="${link('/silver-rate-1-kg/')}">1 kg silver rate</a></li></ul></nav>
     <nav aria-label="Footer"><ul class="footer-links">${FOOTER.map(([p, n]) => `<li><a href="${link(p)}">${esc(n)}</a></li>`).join('')}</ul></nav>
     <p class="muted-light small">Rates are indicative and for information only. Not investment advice. Confirm with your jeweller before buying. © ${new Date().getFullYear()} ${esc(config.name)}</p>
   </div>
@@ -228,9 +229,9 @@ function rateTable(l) {
 <tbody>${rows}</tbody></table></div>`;
 }
 
-function calculatorBlock(l, { heading = 'h2', compact = false } = {}) {
+function calculatorBlock(l, { heading = 'h2', compact = false, grams = 10 } = {}) {
   const perGram = l.perGram;
-  const g = 10, making = 12;
+  const g = grams, making = 12;
   const metal = perGram * PURITY_925 * g;
   const mk = (metal * making) / 100;
   const gst = (metal + mk) * 0.03;
@@ -328,6 +329,7 @@ function ratePage(l) {
   <section class="card" aria-labelledby="table-h"><h2 id="table-h">Silver price today vs yesterday</h2>${rateTable(l)}
   <p class="small muted">925 sterling silver (jewellery grade) works out to about ${inr(l.perGram * PURITY_925, 2)} per gram at today's 999 rate, before making charges and GST.</p></section>
   ${alertsBlock()}
+  ${isHome ? weightLinks() : ''}
   ${cityBoard(l)}
   <section class="card" aria-labelledby="how-h"><h2 id="how-h">How the meter decides</h2><p>We take the 999 silver rate for each of the last ${l.days} trading days we have on record. If today's rate sits in the bottom third of that low-to-high range, the meter reads <strong>lower than usual</strong>; in the top third, <strong>higher than usual</strong>; otherwise <strong>normal</strong>. <a href="${link('/data-source/')}">Read our data source and method</a>.</p></section>
   ${faq.html}
@@ -363,8 +365,9 @@ function historyPage() {
     const months = {};
     for (const h of l.history) (months[h.date.slice(0, 7)] ||= []).push(h.rate999PerKg);
     const monthRows = Object.entries(months).sort((a, b) => b[0].localeCompare(a[0])).map(([m, v]) => {
-      const label = new Date(m + '-01T00:00:00Z').toLocaleDateString('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' });
-      return `<tr><th scope="row">${label}</th><td>${inr(Math.max(...v))}</td><td>${inr(Math.min(...v))}</td><td>${inr(Math.round(v.reduce((a, b) => a + b, 0) / v.length))}</td><td>${v.length}</td></tr>`;
+      const label = monthName(m);
+      const cell = l === india ? `<a href="${link(monthPath(m))}">${label}</a>` : label;
+      return `<tr><th scope="row">${cell}</th><td>${inr(Math.max(...v))}</td><td>${inr(Math.min(...v))}</td><td>${inr(Math.round(v.reduce((a, b) => a + b, 0) / v.length))}</td><td>${v.length}</td></tr>`;
     }).join('');
     const rows = [...l.history].reverse().map((h, i, arr) => {
       const prev = arr[i + 1];
@@ -380,7 +383,7 @@ ${chartSvg(l, l.history)}
 <div class="table-scroll"><table class="rates"><caption>Daily 999 silver rate in ${esc(l.name)}, newest first</caption><thead><tr><th scope="col">Date</th><th scope="col">Per kg</th><th scope="col">Per gram</th><th scope="col">Change</th></tr></thead><tbody>${rows}</tbody></table></div>
 </section>`;
   }).join('\n');
-  const body = `<div class="wrap stack"><h1>Silver rate history</h1><p class="lead">Every daily 999 silver rate we have recorded, newest first, with monthly highs, lows and averages.</p><p class="small muted">${sourceLine()}</p>${sections}</div>`;
+  const body = `<div class="wrap stack"><h1>Silver rate history</h1><p class="lead">Every daily 999 silver rate we have recorded, newest first, with monthly highs, lows and averages.</p>${historySummary(india, india.history)}<p class="small muted">${sourceLine()}</p>${sections}</div>`;
   // No Dataset schema: Google requires a licence we cannot grant for third-party price data.
   return { path, html: layout({ path, title, description, body, breadcrumbs: [[path, 'Silver rate history']] }) };
 }
@@ -434,11 +437,139 @@ function notFoundPage() {
   return layout({ path: '/404.html', title: `Page not found | ${config.name}`, description: 'This page could not be found.', body }).replace(/<meta name="robots" content="[^"]*">/, '<meta name="robots" content="noindex">').replace(/<link rel="canonical"[^>]*>\n/, '').replace(/<meta property="og:url"[^>]*>\n/, '');
 }
 
+
+// ---------- history insights, weight pages, monthly archive ----------
+const monthName = (ym) => new Date(ym + '-01T00:00:00Z').toLocaleDateString('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+const monthPath = (ym) => `/silver-rate-history/${ym}/`;
+const pctText = (a, b) => { const p = ((b - a) / a) * 100; return `${p >= 0 ? '+' : '−'}${Math.abs(p).toFixed(1)}%`; };
+
+function historySummary(l, points) {
+  if (points.length < 2) return '';
+  const first = points[0], last = points[points.length - 1];
+  const hi = points.reduce((a, b) => (b.rate999PerKg > a.rate999PerKg ? b : a));
+  const lo = points.reduce((a, b) => (b.rate999PerKg < a.rate999PerKg ? b : a));
+  const dir = last.rate999PerKg > first.rate999PerKg ? 'risen' : last.rate999PerKg < first.rate999PerKg ? 'fallen' : 'stayed flat';
+  return `<section class="card prose" aria-labelledby="sum-h"><h2 id="sum-h">What the numbers show</h2>
+<p>Between ${esc(longDate(first.date))} and ${esc(longDate(last.date))} (${points.length} trading days), the 999 silver rate in ${esc(l.name)} has ${dir} from ${inr(first.rate999PerKg)} to ${inr(last.rate999PerKg)} per kg, a change of ${pctText(first.rate999PerKg, last.rate999PerKg)}.</p>
+<p>The highest rate in this period was ${inr(hi.rate999PerKg)} per kg on ${esc(longDate(hi.date))}, and the lowest was ${inr(lo.rate999PerKg)} on ${esc(longDate(lo.date))} — a gap of ${inr(hi.rate999PerKg - lo.rate999PerKg)} per kg, or ${inr((hi.rate999PerKg - lo.rate999PerKg) / 100)} on 10 grams. Silver often moves this much within weeks, which is why comparing today's rate with recent days helps you time a purchase.</p>
+<p>Rates are recorded on trading days only (Monday to Friday); markets are closed at weekends.</p>
+</section>`;
+}
+
+const UNITS = [
+  { g: 1, slug: 'silver-rate-1-gram', label: '1 gram', cap: '1 Gram' },
+  { g: 10, slug: 'silver-rate-10-grams', label: '10 grams', cap: '10 Grams' },
+  { g: 100, slug: 'silver-rate-100-grams', label: '100 grams', cap: '100 Grams' },
+  { g: 1000, slug: 'silver-rate-1-kg', label: '1 kg', cap: '1 Kg' }
+];
+const unitPath = (u) => `/${u.slug}/`;
+const unitPrice = (perKg, u) => (perKg / 1000) * u.g;
+const unitDigits = (u) => (u.g < 10 ? 2 : 0);
+
+function weightLinks(current) {
+  return `<section class="card" aria-labelledby="w-h"><h2 id="w-h">Silver price by weight</h2><ul class="board">${UNITS.map((u) => `<li><a class="board-item z-low" href="${link(unitPath(u))}"${u === current ? ' aria-current="page"' : ''}><strong>${esc(u.label)}</strong><span>${inr(unitPrice(india.today.rate999PerKg, u), unitDigits(u))} today</span></a></li>`).join('')}</ul></section>`;
+}
+
+function unitPage(u) {
+  const l = india;
+  const path = unitPath(u);
+  const d = unitDigits(u);
+  const today = unitPrice(l.today.rate999PerKg, u);
+  const y = l.yesterday ? unitPrice(l.yesterday.rate999PerKg, u) : null;
+  const ch = y === null ? null : today - y;
+  const chTxt = ch === null ? 'No previous day to compare' : ch === 0 ? 'No change vs yesterday' : `${ch > 0 ? '▲ +' : '▼ −'}${inr(Math.abs(ch), d)} vs yesterday`;
+  const title = `${u.cap} Silver Rate Today (${dateFmt(l.today.date)}) – ${inr(today, 0)} | ${config.name}`;
+  const description = `Today's ${u.label} silver rate in India: ${inr(today, d)} for 999 silver, ${inr(today * PURITY_925, d)} for 925 jewellery silver. Change vs yesterday, 10-day history, calculator.`;
+  const rows = [...l.history].slice(-10).reverse().map((h, i, arr) => {
+    const v = unitPrice(h.rate999PerKg, u);
+    const prev = arr[i + 1] ? unitPrice(arr[i + 1].rate999PerKg, u) : null;
+    const dd = prev === null ? null : v - prev;
+    const cls = dd === null || dd === 0 ? 'flat' : dd > 0 ? 'up' : 'down';
+    return `<tr><th scope="row">${esc(dateFmt(h.date))}</th><td>${inr(v, d)}</td><td>${inr(v * PURITY_925, d)}</td><td class="${cls}">${dd === null ? '—' : dd === 0 ? 'No change' : (dd > 0 ? '+' : '−') + inr(Math.abs(dd), d)}</td></tr>`;
+  }).join('');
+  const faqs = [
+    [`What is the ${u.label} silver rate today?`, `On ${longDate(l.today.date)}, ${u.label} of 999 silver costs ${inr(today, d)} in India (estimated, before 3% GST). ${u.label} of 925 sterling silver is about ${inr(today * PURITY_925, d)}.`],
+    [`What is the price of ${u.label} of silver with GST?`, `Adding 3% GST, ${u.label} of 999 silver comes to about ${inr(today * 1.03, d)}. Jewellery also has making charges, which are added before GST.`],
+    [`Is the ${u.label} silver rate cheaper than usual today?`, `Today's rate is ${ZONES[l.zone].headline} compared with the last ${l.days} trading days. This is a price comparison, not investment advice.`]
+  ];
+  const body = `<div class="wrap stack">
+<section class="hero-unit">
+  <p class="pill">India · ${esc(longDate(l.today.date))}</p>
+  <h1>${esc(u.cap)} Silver Rate Today in India</h1>
+  <div class="big-rates">
+    <div><span class="label">${esc(u.label)} (999 fine)</span><span class="big">${inr(today, d)}</span></div>
+    <div><span class="label">${esc(u.label)} (925 jewellery)</span><span class="mid">${inr(today * PURITY_925, d)}</span></div>
+    <div><span class="label">With 3% GST (999)</span><span class="mid">${inr(today * 1.03, d)}</span></div>
+  </div>
+  <p class="change ${ch > 0 ? 'up' : ch < 0 ? 'down' : 'flat'}">${esc(chTxt)}</p>
+  <p class="small muted">Silver is <strong>${esc(ZONES[l.zone].headline)}</strong> today compared with the last ${l.days} trading days. <a href="${link('/')}">See the meter</a>.</p>
+  ${EST ? `<p class="small muted">Estimated India rate: international silver price in rupees + ${DUTY}% import duty, before GST. <a href="${link('/data-source/')}">How we calculate it</a>.</p>` : ''}
+  <p class="small muted">${sourceLine()}</p>
+</section>
+<div class="grid-2">
+  <section class="card" aria-labelledby="t-h"><h2 id="t-h">${esc(u.label[0].toUpperCase() + u.label.slice(1))} silver rate: last 10 trading days</h2>
+  <div class="table-scroll"><table class="rates"><caption>Price of ${esc(u.label)} of silver in India, newest first</caption><thead><tr><th scope="col">Date</th><th scope="col">999 silver</th><th scope="col">925 silver</th><th scope="col">Change</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <p class="small"><a href="${link('/silver-rate-history/')}">Full silver rate history</a></p></section>
+  ${calculatorBlock(l, { compact: true, grams: u.g })}
+</div>
+${weightLinks(u)}
+<section class="card faq" aria-labelledby="faq-h"><h2 id="faq-h">Frequently asked questions</h2>
+${faqs.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('\n')}
+</section>
+</div>`;
+  const ld = { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) };
+  return { path, html: layout({ path, title, description, body, breadcrumbs: [[path, `${u.label[0].toUpperCase() + u.label.slice(1)} silver rate`]], jsonld: [ld] }) };
+}
+
+function monthPages() {
+  const l = india;
+  const months = {};
+  for (const h of l.history) (months[h.date.slice(0, 7)] ||= []).push(h);
+  const keys = Object.keys(months).sort();
+  return keys.map((ym, idx) => {
+    const pts = months[ym];
+    const path = monthPath(ym);
+    const name = monthName(ym);
+    const isCurrent = idx === keys.length - 1;
+    const first = pts[0], last = pts[pts.length - 1];
+    const hi = pts.reduce((a, b) => (b.rate999PerKg > a.rate999PerKg ? b : a));
+    const lo = pts.reduce((a, b) => (b.rate999PerKg < a.rate999PerKg ? b : a));
+    const avg = Math.round(pts.reduce((s, p) => s + p.rate999PerKg, 0) / pts.length);
+    const title = `Silver Rate ${name}: Daily Prices, High & Low | ${config.name}`;
+    const description = `Silver rate in India in ${name}: ${inr(first.rate999PerKg)} to ${inr(last.rate999PerKg)} per kg (${pctText(first.rate999PerKg, last.rate999PerKg)}). High ${inr(hi.rate999PerKg)}, low ${inr(lo.rate999PerKg)}. Daily 999 rates.`;
+    const rows = [...pts].reverse().map((h, i, arr) => {
+      const prev = arr[i + 1];
+      const dd = prev ? h.rate999PerKg - prev.rate999PerKg : null;
+      const cls = dd === null || dd === 0 ? 'flat' : dd > 0 ? 'up' : 'down';
+      return `<tr><th scope="row">${esc(dateFmt(h.date))}</th><td>${inr(h.rate999PerKg)}</td><td>${inr(h.rate999PerKg / 1000, 2)}</td><td>${inr(h.rate999PerKg / 100)}</td><td class="${cls}">${dd === null ? '—' : dd === 0 ? 'No change' : (dd > 0 ? '+' : '−') + inr(Math.abs(dd))}</td></tr>`;
+    }).join('');
+    const nav = [idx > 0 ? `<a href="${link(monthPath(keys[idx - 1]))}">← ${monthName(keys[idx - 1])}</a>` : '', idx < keys.length - 1 ? `<a href="${link(monthPath(keys[idx + 1]))}">${monthName(keys[idx + 1])} →</a>` : ''].filter(Boolean).join(' · ');
+    const body = `<div class="wrap stack">
+<h1>Silver Rate in India – ${esc(name)}</h1>
+<p class="lead">Daily 999 silver rates for ${esc(name)}${isCurrent ? ' so far' : ''}: ${pts.length} trading days, from ${inr(first.rate999PerKg)} to ${inr(last.rate999PerKg)} per kg (${pctText(first.rate999PerKg, last.rate999PerKg)}).${idx === 0 && Number(first.date.slice(8)) > 5 ? ` Our records start on ${esc(longDate(first.date))}.` : ''}</p>
+<div class="stats-row">
+  <div class="card stat"><span>First trading day</span><strong>${inr(first.rate999PerKg)}</strong><small>${esc(dateFmt(first.date))}</small></div>
+  <div class="card stat"><span>${isCurrent ? 'Latest' : 'Last trading day'}</span><strong>${inr(last.rate999PerKg)}</strong><small>${esc(dateFmt(last.date))}</small></div>
+  <div class="card stat"><span>Month high</span><strong>${inr(hi.rate999PerKg)}</strong><small>${esc(dateFmt(hi.date))}</small></div>
+  <div class="card stat"><span>Month low</span><strong>${inr(lo.rate999PerKg)}</strong><small>${esc(dateFmt(lo.date))}</small></div>
+  <div class="card stat"><span>Average</span><strong>${inr(avg)}</strong><small>per kg</small></div>
+</div>
+<section class="card" aria-labelledby="mc-h"><h2 id="mc-h">Silver rate chart: ${esc(name)}</h2>${chartSvg(l, pts)}</section>
+<section class="card" aria-labelledby="md-h"><h2 id="md-h">Daily silver rates in ${esc(name)}</h2>
+<div class="table-scroll"><table class="rates"><caption>Daily 999 silver rate in India, ${esc(name)}, newest first</caption><thead><tr><th scope="col">Date</th><th scope="col">Per kg</th><th scope="col">Per gram</th><th scope="col">10 grams</th><th scope="col">Change</th></tr></thead><tbody>${rows}</tbody></table></div>
+<p class="small muted">${EST ? `Estimated India rate before GST (international price in rupees + ${DUTY}% import duty). ` : ''}Trading days only.</p>
+${nav ? `<p>${nav}</p>` : ''}
+</section>
+</div>`;
+    return { path, lastmod: last.date, html: layout({ path, title, description, body, breadcrumbs: [['/silver-rate-history/', 'Silver rate history'], [path, name]] }) };
+  });
+}
+
 // ---------- build ----------
 rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT, { recursive: true });
 
-const pages = [...locations.map(ratePage), calculatorPage(), historyPage(), ...staticPages()];
+const pages = [...locations.map(ratePage), ...UNITS.map(unitPage), calculatorPage(), historyPage(), ...monthPages(), ...staticPages()];
 for (const p of pages) write(p.path === '/' ? 'index.html' : join(p.path, 'index.html'), p.html);
 write('404.html', notFoundPage());
 
