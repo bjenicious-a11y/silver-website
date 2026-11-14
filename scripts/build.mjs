@@ -14,7 +14,7 @@ const BASE_PATH = new URL(BASE_URL).pathname.replace(/\/$/, '');
 const WINDOW_DAYS = 30;
 const PURITY_925 = 0.925;
 // Date the static pages (about, data source, disclaimer, privacy) last changed. Update when editing them.
-const STATIC_PAGES_UPDATED = '2026-11-12';
+const STATIC_PAGES_UPDATED = '2026-11-14';
 
 // ---------- helpers ----------
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -426,7 +426,7 @@ ${EST ? `<h2>How the India rate is estimated</h2><p>We take the international si
 <h2>External links</h2><p>Links to other websites (such as WhatsApp) are governed by those sites' own privacy policies.</p>
 ${config.contactEmail ? `<h2>Contact</h2><p>Questions about this policy: <a href="mailto:${esc(config.contactEmail)}">${esc(config.contactEmail)}</a>.</p>` : ''}`));
   if (config.contactEmail) {
-    pages.push(textPage('/contact/', 'Contact us', 'Contact', `Contact ${config.name} about silver rates, corrections or advertising.`,
+    pages.push(textPage('/contact/', 'Contact us', 'Contact', `Contact ${config.name} about silver rates, data corrections, feedback or advertising enquiries.`,
       `<p>For corrections, feedback or advertising enquiries, email <a href="mailto:${esc(config.contactEmail)}">${esc(config.contactEmail)}</a>.</p>`));
   }
   return pages;
