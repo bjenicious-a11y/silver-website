@@ -5,7 +5,7 @@
   "sourceName": "MetalCharts (international silver spot price in INR)",
   "sourceUrl": "https://metalcharts.org",
   "unit": "INR per kg, 999 fine silver, estimated India rate before GST",
-  "updatedAt": "2026-11-18T05:17:52.452Z",
+  "updatedAt": "2026-11-19T05:21:18.105Z",
   "locations": {
     "india": {
       "name": "India",
@@ -125,6 +125,10 @@
         {
           "date": "2026-11-18",
           "rate999PerKg": 158989
+        },
+        {
+          "date": "2026-11-19",
+          "rate999PerKg": 156635
         }
       ]
     }
